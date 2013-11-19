@@ -34,7 +34,8 @@ def batch_import_task(app_data, client, all_info=False):
 				sys.stdout.write('\r[Info] %s' % count)
 				sys.stdout.flush()
 
-		client.acreate_item(v.iid, ("movie",), { "pio_startT" : v.release_date.isoformat() } )
+		itypes = ("movie",) + v.genres
+		client.acreate_item(v.iid, itypes, { "pio_startT" : v.release_date.isoformat() } )
 	
 	sys.stdout.write('\r[Info] %s items were imported.\n' % count)
 	sys.stdout.flush()

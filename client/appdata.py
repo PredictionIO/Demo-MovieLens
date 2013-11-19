@@ -23,13 +23,14 @@ class User:
 		return "User[uid=%s,rec=%s]" % (self.uid, self.rec)
 
 class Item:
-	def __init__(self, iid, name, release_date):
+	def __init__(self, iid, name, release_date, genres):
 		self.iid = iid
 		self.name = name
 		self.release_date = release_date # datetime.datetime object
+		self.genres = genres
 
 	def __str__(self):
-		return "Item[iid=%s,name=%s,release_date=%s]" % (self.iid, self.name, self.release_date)
+		return "Item[iid=%s,name=%s,release_date=%s,genres=%s]" % (self.iid, self.name, self.release_date, self.genres)
 
 class RateAction:
 	def __init__(self, uid, iid, rating, t):
@@ -70,19 +71,39 @@ class AppData:
 
 	def __init_items(self):
 		"""
-		iid|name|release date 
+		movie id | movie title | release date | video release date |
+	      IMDb URL | unknown | Action | Adventure | Animation |
+	      Children's | Comedy | Crime | Documentary | Drama | Fantasy |
+	      Film-Noir | Horror | Musical | Mystery | Romance | Sci-Fi |
+	      Thriller | War | Western |
+	      The last 19 fields are the genres, a 1 indicates the movie
+	      is of that genre, a 0 indicates it is not; movies can be in
+	      several genres at once.
+
 		"""
+		genre_names = [ "unknown", "Action", "Adventure", "Animation", 
+			"Children's", "Comedy", "Crime", "Documentary", "Drama", "Fantasy",
+			"Film-Noir", "Horror", "Musical", "Mystery", "Romance", "Sci-Fi",
+			"Thriller", "War", "Western"]
+
 		print "[Info] Initializing items..."
 		f = open(self._items_file, 'r')
 		for line in f:	
 			data = line.rstrip('\r\n').split(ITEMS_FILE_DELIMITER)
+			genres_flags = data[5:24]
+
+			genres = () # tuple of genres
+			for g,flag in zip(genre_names, genres_flags):
+				if flag == '1':
+					genres = genres + (g,)
+
 			try:
 				# eg. 01-Jan-1994
 				release_date = datetime.datetime.strptime(data[2], "%d-%b-%Y")
 			except:
 				print "[Note] item %s %s doesn't have release date. Skip it." % (data[0], data[1])
 			else:
-				self.add_item(Item(data[0], data[1], release_date))
+				self.add_item(Item(data[0], data[1], release_date, genres))
 		f.close()
 		print "[Info] %s items were initialized." % len(self._items)
 
