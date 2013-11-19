@@ -87,7 +87,7 @@ class App:
 				self.display_items((i.iid,), all_info=False)
 				print "\n[Info] People who liked this may also liked..."
 				try:
-					rec = self._client.get_itemsim_topn(SIM_ENGINE_NAME, i.iid, n, { 'pio_itypes' : v.genres })
+					rec = self._client.get_itemsim_topn(SIM_ENGINE_NAME, i.iid, n, { 'pio_itypes' : i.genres })
 					self.display_items(rec['pio_iids'], all_info=False)
 				except predictionio.ItemSimNotFoundError:
 					print "[Info] Similar movies not found"
