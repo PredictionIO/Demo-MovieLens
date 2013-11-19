@@ -6,6 +6,7 @@ import sys
 from app_config import APP_KEY, API_URL
 
 ENGINE_NAME = 'movie-rec'
+SIM_ENGINE_NAME = 'movie-sim'
 
 class App:
 
@@ -22,7 +23,8 @@ class App:
 			"Please input selection:\n"\
 			" 0: Quit application.\n"\
 			" 1: Get Recommendations from PredictionIO.\n"\
-			" 2: Display user's data." % (state, '-'*len(state))
+			" 2: Display user's data.\n"\
+			" 3: Get similar movies.\n" % (state, '-'*len(state)) 
 
 		while True:
 			print prompt
@@ -34,6 +36,8 @@ class App:
 				self.recommend_task(state)
 			elif choice == '2':
 				self.display_user_task(state)
+			elif choice == '3':
+				self.get_similar_movies_task(state)
 			else:
 				print '[Error] \'%s\' is not a valid selection.' % choice
 
@@ -65,6 +69,32 @@ class App:
 				break
 			else:
 				print "[Error] invalid user id %s. Go back to previous menu..." % choice
+				break
+
+	def get_similar_movies_task(self, prev_state):
+		state = prev_state + "/ [Get Similar Movies]"
+		prompt = "\n"\
+			"%s\n"\
+			"%s\n"\
+			"Please enter movie id:" % (state, '-'*len(state))
+
+		while True:
+			print prompt
+			choice = raw_input().lower()
+			i = self._app_data.get_item(choice)
+			if i:
+				n = 10
+				print "[Info] Getting top %s similar movies of %s..." % (n, i.name)
+				try:
+					rec = self._client.get_itemsim_topn(SIM_ENGINE_NAME, i.iid, n)
+					self.display_items(rec['pio_iids'])
+				except predictionio.ItemSimNotFoundError:
+					print "[Info] Similar movies not found"
+
+				print "[Info] Go back to previous menu..."
+				break
+			else:
+				print "[Error] invalid item id %s. Go back to previous menu..." % choice
 				break
 
 	def display_user_task(self, prev_state):
