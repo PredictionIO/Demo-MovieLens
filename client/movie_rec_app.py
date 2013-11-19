@@ -22,9 +22,9 @@ class App:
 			"%s\n"\
 			"Please input selection:\n"\
 			" 0: Quit application.\n"\
-			" 1: Get Recommendations from PredictionIO.\n"\
+			" 1: Get personalized recommendation.\n"\
 			" 2: Display user's data.\n"\
-			" 3: Get similar movies.\n" % (state, '-'*len(state)) 
+			" 3: Display movie data.\n" % (state, '-'*len(state)) 
 
 		while True:
 			print prompt
@@ -84,10 +84,11 @@ class App:
 			i = self._app_data.get_item(choice)
 			if i:
 				n = 10
-				print "[Info] Getting top %s similar movies of %s..." % (n, i.name)
+				self.display_items((i.iid,), all_info=False)
+				print "\n[Info] People who liked this may also liked..."
 				try:
 					rec = self._client.get_itemsim_topn(SIM_ENGINE_NAME, i.iid, n)
-					self.display_items(rec['pio_iids'])
+					self.display_items(rec['pio_iids'], all_info=False)
 				except predictionio.ItemSimNotFoundError:
 					print "[Info] Similar movies not found"
 
@@ -135,7 +136,7 @@ class App:
 					if all_info:
 						print "[Info] %s" % item
 					else:
-						print "[Info] %s" % item.name
+						print "[Info] (%s) %s %s" % (item.iid, item.name, item.release_date.strftime("%d-%b-%Y"))
 				else:
 					print "[Error] Invalid item id %s" % iid
 		else:
