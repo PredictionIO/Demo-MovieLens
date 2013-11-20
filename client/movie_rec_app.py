@@ -72,7 +72,7 @@ class App:
 				break
 
 	def get_similar_movies_task(self, prev_state):
-		state = prev_state + "/ [Get Similar Movies]"
+		state = prev_state + " / [Get Similar Movies]"
 		prompt = "\n"\
 			"%s\n"\
 			"%s\n"\
