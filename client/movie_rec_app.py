@@ -116,6 +116,15 @@ class App:
 				print "\n[Info] Top %s movies rated by this user:" % n
 				self.display_rate_actions(topn_rate_actions)
 
+				print "\n[Info] Getting New Recommendation..."
+				n = 10
+				try:
+					self._client.identify(u.uid)
+					rec = self._client.get_itemrec_topn(ENGINE_NAME, n)
+					u.rec = rec['pio_iids']
+				except predictionio.ItemRecNotFoundError:
+					print "[Info] Recommendation not found"
+
 				print "\n[Info] Movies recommended to this user:"
 				self.display_items(u.rec)
 
