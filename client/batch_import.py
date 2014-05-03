@@ -8,7 +8,7 @@ from app_config import APP_KEY, API_URL, THREADS, REQUEST_QSIZE
 def batch_import_task(app_data, client, all_info=False):
 
 	print "[Info] Importing users to PredictionIO..."
-	count = 0 
+	count = 0
 	for k, v in app_data.get_users().iteritems():
 		count += 1
 		if all_info:
@@ -19,7 +19,7 @@ def batch_import_task(app_data, client, all_info=False):
 				sys.stdout.flush()
 
 		client.acreate_user(v.uid)
-	
+
 	sys.stdout.write('\r[Info] %s users were imported.\n' % count)
 	sys.stdout.flush()
 
@@ -35,8 +35,11 @@ def batch_import_task(app_data, client, all_info=False):
 				sys.stdout.flush()
 
 		itypes = ("movie",) + v.genres
-		client.acreate_item(v.iid, itypes, { "pio_startT" : v.release_date.isoformat() } )
-	
+		client.acreate_item(v.iid, itypes,
+			{ "pio_startT" : v.release_date.isoformat(),
+			  "name" : v.name,
+				"year" : v.year } )
+
 	sys.stdout.write('\r[Info] %s items were imported.\n' % count)
 	sys.stdout.flush()
 
@@ -52,7 +55,8 @@ def batch_import_task(app_data, client, all_info=False):
 				sys.stdout.flush()
 
 		client.identify(v.uid)
-		client.arecord_action_on_item("rate", v.iid, { "pio_rate": v.rating, "pio_t": v.t })
+		client.arecord_action_on_item("rate", v.iid,
+			{ "pio_rate": v.rating, "pio_t": v.t })
 
 	sys.stdout.write('\r[Info] %s rate actions were imported.\n' % count)
 	sys.stdout.flush()
@@ -64,4 +68,3 @@ if __name__ == '__main__':
 	client = predictionio.Client(APP_KEY, THREADS, API_URL, qsize=REQUEST_QSIZE)
 	batch_import_task(app_data, client)
 	client.close()
-

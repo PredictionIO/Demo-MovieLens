@@ -23,11 +23,12 @@ class User:
 		return "User[uid=%s,rec=%s]" % (self.uid, self.rec)
 
 class Item:
-	def __init__(self, iid, name, release_date, genres):
+	def __init__(self, iid, name, release_date, genres, year):
 		self.iid = iid
 		self.name = name
 		self.release_date = release_date # datetime.datetime object
 		self.genres = genres
+		self.year = year
 
 	def __str__(self):
 		return "Item[iid=%s,name=%s,release_date=%s,genres=%s]" % (self.iid, self.name, self.release_date, self.genres)
@@ -81,14 +82,14 @@ class AppData:
 	      several genres at once.
 
 		"""
-		genre_names = [ "unknown", "Action", "Adventure", "Animation", 
+		genre_names = [ "unknown", "Action", "Adventure", "Animation",
 			"Children's", "Comedy", "Crime", "Documentary", "Drama", "Fantasy",
 			"Film-Noir", "Horror", "Musical", "Mystery", "Romance", "Sci-Fi",
 			"Thriller", "War", "Western"]
 
 		print "[Info] Initializing items..."
 		f = open(self._items_file, 'r')
-		for line in f:	
+		for line in f:
 			data = line.rstrip('\r\n').split(ITEMS_FILE_DELIMITER)
 			genres_flags = data[5:24]
 
@@ -100,10 +101,16 @@ class AppData:
 			try:
 				# eg. 01-Jan-1994
 				release_date = datetime.datetime.strptime(data[2], "%d-%b-%Y")
+				(day, month, year) = data[2].split('-')
 			except:
 				print "[Note] item %s %s doesn't have release date. Skip it." % (data[0], data[1])
 			else:
-				self.add_item(Item(data[0], data[1], release_date, genres))
+				self.add_item(Item(
+					iid=data[0],
+					name=data[1],
+					release_date=release_date,
+					genres=genres,
+					year=year))
 		f.close()
 		print "[Info] %s items were initialized." % len(self._items)
 

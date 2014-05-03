@@ -2,6 +2,7 @@
 from appdata import AppData
 import predictionio
 import sys
+from sets import Set
 
 from app_config import APP_KEY, API_URL
 
@@ -23,8 +24,9 @@ class App:
 			"Please input selection:\n"\
 			" 0: Quit application.\n"\
 			" 1: Get personalized recommendation.\n"\
-			" 2: Display user's data.\n"\
-			" 3: Display movie data.\n" % (state, '-'*len(state)) 
+			" 2: Display user data.\n"\
+			" 3: Display movie data.\n"\
+			" 4: Recommend with multiple movies.\n" % (state, '-'*len(state))
 
 		while True:
 			print prompt
@@ -38,6 +40,8 @@ class App:
 				self.display_user_task(state)
 			elif choice == '3':
 				self.get_similar_movies_task(state)
+			elif choice == '4':
+				self.recommend_with_multiple_movies_task(state)
 			else:
 				print '[Error] \'%s\' is not a valid selection.' % choice
 
@@ -76,18 +80,56 @@ class App:
 		prompt = "\n"\
 			"%s\n"\
 			"%s\n"\
-			"Please enter movie id:" % (state, '-'*len(state))
+			"Please enter movie id (eg. 1):" % (state, '-'*len(state))
 
 		while True:
 			print prompt
 			choice = raw_input().lower()
 			i = self._app_data.get_item(choice)
+
 			if i:
 				n = 10
 				self.display_items((i.iid,), all_info=False)
 				print "\n[Info] People who liked this may also liked..."
 				try:
-					rec = self._client.get_itemsim_topn(SIM_ENGINE_NAME, i.iid, n, { 'pio_itypes' : i.genres })
+					rec = self._client.get_itemsim_topn(SIM_ENGINE_NAME, i.iid, n,
+						{ 'pio_itypes' : i.genres })
+					self.display_items(rec['pio_iids'], all_info=False)
+				except predictionio.ItemSimNotFoundError:
+					print "[Info] Similar movies not found"
+
+				print "[Info] Go back to previous menu..."
+				break
+			else:
+				print "[Error] invalid item id %s. Go back to previous menu..." % choice
+				break
+
+	def recommend_with_multiple_movies_task(self, prev_state):
+		state = prev_state + " / [Recommend with Multiple Movies]"
+		prompt = "\n"\
+			"%s\n"\
+			"%s\n"\
+			"Please enter comma separated movie ids (eg. 1,2,3):" % (state, '-'*len(state))
+
+		while True:
+			print prompt
+			choice = raw_input().lower()
+			viewed_iids = choice.split(",")
+			viewed_items = map(lambda x : self._app_data.get_item(x), viewed_iids)
+
+			viewed_genres = Set()
+			for i in viewed_items:
+				if i:
+					for g in i.genres:
+						viewed_genres.add(g)
+
+			if None not in viewed_items:
+				n = 10
+				self.display_items(viewed_iids, all_info=False)
+				print "\n[Info] Top %s similar movies..." % n
+				try:
+					rec = self._client.get_itemsim_topn(SIM_ENGINE_NAME, choice, n,
+						{ 'pio_itypes' : list(viewed_genres) })
 					self.display_items(rec['pio_iids'], all_info=False)
 				except predictionio.ItemSimNotFoundError:
 					print "[Info] Similar movies not found"
@@ -134,7 +176,7 @@ class App:
 			else:
 				print "[Error] invalid user id %s. Go back to previous menu..." % choice
 				break
-	
+
 	def display_items(self, iids, all_info=False):
 		"""print item info for each iid in the list
 		"""
@@ -145,7 +187,8 @@ class App:
 					if all_info:
 						print "[Info] %s" % item
 					else:
-						print "[Info] (%s) %s %s" % (item.iid, item.name, item.release_date.strftime("%d-%b-%Y"))
+						print "[Info] (%s) %s %s %s" % (item.iid, item.name,
+							item.release_date.strftime("%d-%b-%Y"), item.genres)
 				else:
 					print "[Error] Invalid item id %s" % iid
 		else:
@@ -158,7 +201,8 @@ class App:
 			for a in actions:
 				item = self._app_data.get_item(a.iid)
 				if item:
-					print "[Info] (%s) %s, rating = %s" % (item.iid, item.name, a.rating)
+					print "[Info] (%s) %s %s %s, rating = %s" % (item.iid, item.name,
+						item.release_date.strftime("%d-%b-%Y"), item.genres, a.rating)
 				else:
 					print "[Error] Invalid item id %s" % a.iid
 		else:
@@ -175,6 +219,6 @@ if __name__ == '__main__':
 
 	print "\nWelcome To PredictionIO Python-SDK Demo App!"
 	print "============================================\n"
-	
+
 	my_app = App()
 	my_app.run()
